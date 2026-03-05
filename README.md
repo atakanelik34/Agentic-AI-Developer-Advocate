@@ -98,6 +98,29 @@ npm run build
 npm run dev -- --host 0.0.0.0 --port 8080
 ```
 
+## Persistent VM Services (systemd + tunnel)
+
+Use the bundled installer on the VM:
+
+```bash
+cd ~/revenuecat-agent
+sudo bash ops/systemd/install-vm-services.sh
+```
+
+It installs and manages:
+
+- `kairos-agent-backend.service` (docker compose backend stack)
+- `kairos-agent-ui.service` (Kairos panel on port `8080`)
+- `kairos-agent-tunnel.service` (cloudflared quick tunnel to panel)
+
+Check status:
+
+```bash
+sudo systemctl status kairos-agent-backend.service
+sudo systemctl status kairos-agent-ui.service
+sudo systemctl status kairos-agent-tunnel.service
+```
+
 ## Public Presence
 
 - Kairos X: [@KairosAgentX](https://x.com/KairosAgentX)
