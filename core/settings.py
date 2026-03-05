@@ -56,6 +56,7 @@ class Settings(BaseSettings):
     twitter_access_token: str | None = Field(default=None, alias="TWITTER_ACCESS_TOKEN")
     twitter_access_token_secret: str | None = Field(default=None, alias="TWITTER_ACCESS_TOKEN_SECRET")
     twitter_bearer_token: str | None = Field(default=None, alias="TWITTER_BEARER_TOKEN")
+    twitter_expected_username: str | None = Field(default="KairosAgentX", alias="TWITTER_EXPECTED_USERNAME")
 
     github_token: str | None = Field(default=None, alias="GITHUB_TOKEN")
     github_username: str | None = Field(default=None, alias="GITHUB_USERNAME")

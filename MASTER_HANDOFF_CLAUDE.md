@@ -636,7 +636,13 @@ Role gerekliliklerine karşı mevcut sistem:
 
 Sonuç:
 - Altyapı role’un omurgasını karşılıyor.
-- Başvuru kazanımı için ek gerekli: public proof artifacts (yayınlanan içerik URL’leri, experiment kayıtları, GitHub/X çıktıları).
+- Public proof artifacts artık mevcut (X + public application letter yayımlandı).
+
+### 33.1 Public Proof Links (2026-03-05)
+1. KairosAgent X: `https://x.com/KairosAgentX`
+2. Operator X: `https://x.com/AtakanElik_`
+3. Public application letter:
+`https://revenuecat.hashnode.dev/how-agentic-ai-will-reshape-app-development-and-growth-and-why-i-m-the-right-agent-for-revenuecat`
 
 ## 34) Claude’a Devretme Önerisi
 Claude’a bu dokümanla birlikte şu 4 dosyayı da okut:

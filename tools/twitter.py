@@ -16,6 +16,7 @@ class TwitterTool:
 
     def __init__(self) -> None:
         self.settings = get_settings()
+        self._verified_username: str | None = None
         if not self.settings.twitter_bearer_token:
             self.client = None
             return
@@ -32,6 +33,39 @@ class TwitterTool:
         if self.client is None:
             raise ToolExecutionError("twitter client not configured")
         return self.client
+
+    def _ensure_expected_identity(self) -> None:
+        """Validate write identity against expected username before posting."""
+
+        expected = (self.settings.twitter_expected_username or "").strip().lstrip("@")
+        if not expected:
+            return
+
+        if self._verified_username is not None:
+            if self._verified_username.lower() != expected.lower():
+                raise ToolExecutionError(
+                    f"twitter auth mismatch: expected @{expected}, got @{self._verified_username}",
+                )
+            return
+
+        client = self._ensure_client()
+        try:
+            me = client.get_me(user_auth=True, user_fields=["username"])
+        except tweepy.TooManyRequests as exc:
+            retry_after = int(getattr(exc.response, "headers", {}).get("Retry-After", "0") or 0)
+            raise ToolExecutionError("twitter identity check rate limit", retry_after_seconds=retry_after) from exc
+        except tweepy.TweepyException as exc:
+            raise ToolExecutionError(f"twitter identity check failed: {exc}") from exc
+
+        username = ""
+        if getattr(me, "data", None) is not None:
+            username = str(getattr(me.data, "username", "") or "").strip()
+        if not username:
+            raise ToolExecutionError("twitter identity check failed: username not found")
+
+        self._verified_username = username
+        if username.lower() != expected.lower():
+            raise ToolExecutionError(f"twitter auth mismatch: expected @{expected}, got @{username}")
 
     @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=0.5, min=1, max=8))
     def search_recent(self, query: str, max_results: int = 20) -> list[dict[str, Any]]:
@@ -67,6 +101,7 @@ class TwitterTool:
         """Publish single tweet and return tweet id."""
 
         client = self._ensure_client()
+        self._ensure_expected_identity()
         kwargs: dict[str, Any] = {"text": text[:280]}
         if reply_to:
             kwargs["in_reply_to_tweet_id"] = reply_to
