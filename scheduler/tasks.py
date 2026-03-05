@@ -136,7 +136,12 @@ def run_growth_experiment_execution(
         job_run_id,
     )
     try:
-        result = execute_planned_experiment(store=store, success_threshold=settings.experiment_success_threshold)
+        tools = _runtime()["tools"]
+        result = execute_planned_experiment(
+            store=store,
+            success_threshold=settings.experiment_success_threshold,
+            tools=tools,
+        )
         store.update_job_run(job_id, status="success", result=result)
         return {"job_id": str(job_id), **result}
     except Exception as exc:  # noqa: BLE001

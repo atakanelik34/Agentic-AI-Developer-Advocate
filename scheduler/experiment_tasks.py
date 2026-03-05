@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 from datetime import UTC, date, datetime, timedelta
 from typing import Any
 
@@ -59,8 +58,27 @@ def plan_next_experiment(report_agent: ReportAgent, store: MemoryStore) -> dict[
     }
 
 
-def execute_planned_experiment(store: MemoryStore, success_threshold: float) -> dict[str, Any]:
-    """Move planned experiment to running and auto-fill baseline metric."""
+def execute_planned_experiment(
+    store: MemoryStore,
+    success_threshold: float,
+    tools: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Move planned experiment to running and compute result from live signals when possible."""
+
+    return execute_planned_experiment_with_tools(
+        store=store,
+        success_threshold=success_threshold,
+        tools=tools,
+    )
+
+
+def execute_planned_experiment_with_tools(
+    *,
+    store: MemoryStore,
+    success_threshold: float,
+    tools: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Move planned experiment to running and compute measurable result."""
 
     experiment = store.get_planned_experiment()
     if not experiment:
@@ -74,21 +92,80 @@ def execute_planned_experiment(store: MemoryStore, success_threshold: float) -> 
         notes=f"baseline_auto_filled={baseline}",
     )
 
-    # Placeholder result in MVP; expected to be replaced by measurement pipeline.
-    simulated_result = baseline * 1.12 if baseline > 0 else 10.0
-    success = simulated_result >= baseline * (1 + success_threshold) if baseline > 0 else True
+    target_metric = str(experiment.get("target_metric") or "impressions")
+    result_value = _measure_experiment_result(store=store, tools=tools, target_metric=target_metric)
+    threshold = baseline * (1 + success_threshold)
+    success = result_value >= threshold if baseline > 0 else result_value > 0
+    notes = f"live_measurement target_metric={target_metric} result={result_value} threshold={threshold}"
 
     store.update_growth_experiment(
         experiment_id=experiment["id"],
         status="completed",
-        result_value=simulated_result,
+        result_value=result_value,
         success=success,
-        notes=f"simulated_result={simulated_result}",
+        notes=notes,
     )
 
     return {
         "experiment_id": str(experiment["id"]),
         "baseline": baseline,
-        "result": simulated_result,
+        "result": result_value,
         "success": success,
     }
+
+
+def _measure_experiment_result(
+    *,
+    store: MemoryStore,
+    tools: dict[str, Any] | None,
+    target_metric: str,
+) -> float:
+    metric = target_metric.lower().strip()
+
+    if metric in {"impressions", "total_reach"} and tools and tools.get("twitter"):
+        return _measure_twitter_thread_impressions(store=store, tools=tools)
+
+    reports = store.get_recent_weekly_reports(weeks=1)
+    if reports:
+        latest = reports[0]
+        mapping = {
+            "content_published": "content_published",
+            "community_interactions": "community_interactions",
+            "feedback_submitted": "feedback_submitted",
+            "impressions": "total_reach",
+            "total_reach": "total_reach",
+        }
+        column = mapping.get(metric)
+        if column:
+            value = latest.get(column)
+            if value is not None:
+                return float(value)
+    return 0.0
+
+
+def _measure_twitter_thread_impressions(*, store: MemoryStore, tools: dict[str, Any]) -> float:
+    interactions = store.get_recent_interactions(days=7)
+    tweet_ids: list[str] = []
+    seen: set[str] = set()
+
+    for item in interactions:
+        if item.get("platform") != "twitter":
+            continue
+        if item.get("interaction_type") != "thread":
+            continue
+        external_id = str(item.get("external_id") or "").strip()
+        if not external_id or external_id in seen:
+            continue
+        seen.add(external_id)
+        tweet_ids.append(external_id)
+
+    total = 0.0
+    twitter_tool = tools["twitter"]
+    for tweet_id in tweet_ids[:20]:
+        try:
+            metrics = twitter_tool.get_tweet_metrics(tweet_id)
+        except Exception:  # noqa: BLE001
+            continue
+        total += float(metrics.get("impression", 0) or 0)
+
+    return total

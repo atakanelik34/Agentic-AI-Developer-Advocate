@@ -37,6 +37,8 @@ class LLMRouter:
             "gemini": GeminiProvider(),
             "ollama": OllamaProvider(),
         }
+        self._probe_cache: dict[str, Any] | None = None
+        self._probe_cached_at = 0.0
 
     def ordered_provider_names(self) -> list[str]:
         """Return configured provider fallback order."""
@@ -135,6 +137,43 @@ class LLMRouter:
         input_price = float(model_cfg.get("input_per_million_usd", 0.0))
         output_price = float(model_cfg.get("output_per_million_usd", 0.0))
         return (input_tokens / 1_000_000 * input_price) + (output_tokens / 1_000_000 * output_price)
+
+    def probe(self, max_age_seconds: int = 60) -> dict[str, Any]:
+        """Run lightweight live probe against configured providers (cached)."""
+
+        now = time.time()
+        if self._probe_cache and (now - self._probe_cached_at) <= max_age_seconds:
+            return self._probe_cache
+
+        last_error = "no providers configured"
+        for provider_name in self.ordered_provider_names():
+            provider = self.providers.get(provider_name)
+            if provider is None:
+                continue
+            model = self._select_model_for_provider(provider_name=provider_name, workload="standard")
+            started = time.perf_counter()
+            try:
+                response = provider.generate(
+                    system_prompt="Health check. Reply with one word.",
+                    user_prompt="pong",
+                    model=model,
+                )
+                result = {
+                    "status": "ok",
+                    "provider": provider_name,
+                    "model": response.model,
+                    "latency_ms": int((time.perf_counter() - started) * 1000),
+                }
+                self._probe_cache = result
+                self._probe_cached_at = now
+                return result
+            except Exception as exc:  # noqa: BLE001
+                last_error = str(exc)
+
+        result = {"status": "fail", "error": last_error}
+        self._probe_cache = result
+        self._probe_cached_at = now
+        return result
 
 
 def _load_yaml(path: str) -> dict[str, Any]:

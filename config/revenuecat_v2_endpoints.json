@@ -1,0 +1,236 @@
+{
+  "source": "https://www.revenuecat.com/docs/redocusaurus/plugin-redoc-0.yaml",
+  "base_url": "https://api.revenuecat.com/v2",
+  "generated_at_utc": "2026-03-05T13:03:01Z",
+  "endpoint_count": 67,
+  "paths": {
+    "/projects": [
+      "GET",
+      "POST"
+    ],
+    "/projects/{project_id}/apps": [
+      "GET",
+      "POST"
+    ],
+    "/projects/{project_id}/apps/{app_id}": [
+      "DELETE",
+      "GET",
+      "POST"
+    ],
+    "/projects/{project_id}/apps/{app_id}/public_api_keys": [
+      "GET"
+    ],
+    "/projects/{project_id}/apps/{app_id}/store_kit_config": [
+      "GET"
+    ],
+    "/projects/{project_id}/audit_logs": [
+      "GET"
+    ],
+    "/projects/{project_id}/charts/{chart_name}": [
+      "GET"
+    ],
+    "/projects/{project_id}/charts/{chart_name}/options": [
+      "GET"
+    ],
+    "/projects/{project_id}/collaborators": [
+      "GET"
+    ],
+    "/projects/{project_id}/customers": [
+      "GET",
+      "POST"
+    ],
+    "/projects/{project_id}/customers/{customer_id}": [
+      "DELETE",
+      "GET"
+    ],
+    "/projects/{project_id}/customers/{customer_id}/actions/assign_offering": [
+      "POST"
+    ],
+    "/projects/{project_id}/customers/{customer_id}/actions/grant_entitlement": [
+      "POST"
+    ],
+    "/projects/{project_id}/customers/{customer_id}/actions/revoke_granted_entitlement": [
+      "POST"
+    ],
+    "/projects/{project_id}/customers/{customer_id}/actions/transfer": [
+      "POST"
+    ],
+    "/projects/{project_id}/customers/{customer_id}/active_entitlements": [
+      "GET"
+    ],
+    "/projects/{project_id}/customers/{customer_id}/aliases": [
+      "GET"
+    ],
+    "/projects/{project_id}/customers/{customer_id}/attributes": [
+      "GET",
+      "POST"
+    ],
+    "/projects/{project_id}/customers/{customer_id}/invoices": [
+      "GET"
+    ],
+    "/projects/{project_id}/customers/{customer_id}/invoices/{invoice_id}/file": [
+      "GET"
+    ],
+    "/projects/{project_id}/customers/{customer_id}/purchases": [
+      "GET"
+    ],
+    "/projects/{project_id}/customers/{customer_id}/subscriptions": [
+      "GET"
+    ],
+    "/projects/{project_id}/customers/{customer_id}/virtual_currencies": [
+      "GET"
+    ],
+    "/projects/{project_id}/customers/{customer_id}/virtual_currencies/transactions": [
+      "POST"
+    ],
+    "/projects/{project_id}/customers/{customer_id}/virtual_currencies/update_balance": [
+      "POST"
+    ],
+    "/projects/{project_id}/entitlements": [
+      "GET",
+      "POST"
+    ],
+    "/projects/{project_id}/entitlements/{entitlement_id}": [
+      "DELETE",
+      "GET",
+      "POST"
+    ],
+    "/projects/{project_id}/entitlements/{entitlement_id}/actions/archive": [
+      "POST"
+    ],
+    "/projects/{project_id}/entitlements/{entitlement_id}/actions/attach_products": [
+      "POST"
+    ],
+    "/projects/{project_id}/entitlements/{entitlement_id}/actions/detach_products": [
+      "POST"
+    ],
+    "/projects/{project_id}/entitlements/{entitlement_id}/actions/unarchive": [
+      "POST"
+    ],
+    "/projects/{project_id}/entitlements/{entitlement_id}/products": [
+      "GET"
+    ],
+    "/projects/{project_id}/integrations/webhooks": [
+      "GET",
+      "POST"
+    ],
+    "/projects/{project_id}/integrations/webhooks/{webhook_integration_id}": [
+      "DELETE",
+      "GET",
+      "POST"
+    ],
+    "/projects/{project_id}/metrics/overview": [
+      "GET"
+    ],
+    "/projects/{project_id}/offerings": [
+      "GET",
+      "POST"
+    ],
+    "/projects/{project_id}/offerings/{offering_id}": [
+      "DELETE",
+      "GET",
+      "POST"
+    ],
+    "/projects/{project_id}/offerings/{offering_id}/actions/archive": [
+      "POST"
+    ],
+    "/projects/{project_id}/offerings/{offering_id}/actions/unarchive": [
+      "POST"
+    ],
+    "/projects/{project_id}/offerings/{offering_id}/packages": [
+      "GET",
+      "POST"
+    ],
+    "/projects/{project_id}/packages/{package_id}": [
+      "DELETE",
+      "GET",
+      "POST"
+    ],
+    "/projects/{project_id}/packages/{package_id}/actions/attach_products": [
+      "POST"
+    ],
+    "/projects/{project_id}/packages/{package_id}/actions/detach_products": [
+      "POST"
+    ],
+    "/projects/{project_id}/packages/{package_id}/products": [
+      "GET"
+    ],
+    "/projects/{project_id}/paywalls": [
+      "GET",
+      "POST"
+    ],
+    "/projects/{project_id}/paywalls/{paywall_id}": [
+      "DELETE",
+      "GET"
+    ],
+    "/projects/{project_id}/products": [
+      "GET",
+      "POST"
+    ],
+    "/projects/{project_id}/products/{product_id}": [
+      "DELETE",
+      "GET",
+      "POST"
+    ],
+    "/projects/{project_id}/products/{product_id}/actions/archive": [
+      "POST"
+    ],
+    "/projects/{project_id}/products/{product_id}/actions/unarchive": [
+      "POST"
+    ],
+    "/projects/{project_id}/products/{product_id}/create_in_store": [
+      "POST"
+    ],
+    "/projects/{project_id}/purchases": [
+      "GET"
+    ],
+    "/projects/{project_id}/purchases/{purchase_id}": [
+      "GET"
+    ],
+    "/projects/{project_id}/purchases/{purchase_id}/actions/refund": [
+      "POST"
+    ],
+    "/projects/{project_id}/purchases/{purchase_id}/entitlements": [
+      "GET"
+    ],
+    "/projects/{project_id}/subscriptions": [
+      "GET"
+    ],
+    "/projects/{project_id}/subscriptions/{subscription_id}": [
+      "GET"
+    ],
+    "/projects/{project_id}/subscriptions/{subscription_id}/actions/cancel": [
+      "POST"
+    ],
+    "/projects/{project_id}/subscriptions/{subscription_id}/actions/refund": [
+      "POST"
+    ],
+    "/projects/{project_id}/subscriptions/{subscription_id}/authenticated_management_url": [
+      "GET"
+    ],
+    "/projects/{project_id}/subscriptions/{subscription_id}/entitlements": [
+      "GET"
+    ],
+    "/projects/{project_id}/subscriptions/{subscription_id}/transactions": [
+      "GET"
+    ],
+    "/projects/{project_id}/subscriptions/{subscription_id}/transactions/{transaction_id}/actions/refund": [
+      "POST"
+    ],
+    "/projects/{project_id}/virtual_currencies": [
+      "GET",
+      "POST"
+    ],
+    "/projects/{project_id}/virtual_currencies/{virtual_currency_code}": [
+      "DELETE",
+      "GET",
+      "POST"
+    ],
+    "/projects/{project_id}/virtual_currencies/{virtual_currency_code}/actions/archive": [
+      "POST"
+    ],
+    "/projects/{project_id}/virtual_currencies/{virtual_currency_code}/actions/unarchive": [
+      "POST"
+    ]
+  }
+}

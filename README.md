@@ -34,6 +34,7 @@ Production-hardened, vendor-agnostic autonomous agent runtime for RevenueCat adv
 - Python 3.11+
 - `rclone` for remote backup uploads
 - On GCP VM: `aiplatform.googleapis.com` enabled
+- RevenueCat v2 credentials: `REVENUECAT_API_KEY` + `REVENUECAT_PROJECT_ID` (`REVENUECAT_V1_API_KEY` optional for `/v1/subscribers` fallback)
 
 ## Quick Start
 
@@ -117,8 +118,15 @@ Priority order:
 pytest -q
 ```
 
+Refresh RevenueCat v2 endpoint registry from official docs:
+
+```bash
+python scripts/sync_revenuecat_v2_registry.py
+```
+
 ## Notes
 
 - Discord integration is optional (`ENABLE_DISCORD=false` by default).
 - Backups require a remote target (`BACKUP_REMOTE_URL`); local-only backup is intentionally unsupported.
 - `config/rate_limits.yaml` is the source of truth for retry windows and limits.
+- RevenueCat v2 endpoint registry is stored at `config/revenuecat_v2_endpoints.json` and can be called generically via `RevenueCatTool.request_v2(...)`.

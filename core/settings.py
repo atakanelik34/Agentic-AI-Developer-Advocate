@@ -47,6 +47,8 @@ class Settings(BaseSettings):
     moderation_timeout_ms: int = Field(default=4000, alias="MODERATION_TIMEOUT_MS")
 
     revenuecat_api_key: str | None = Field(default=None, alias="REVENUECAT_API_KEY")
+    revenuecat_v1_api_key: str | None = Field(default=None, alias="REVENUECAT_V1_API_KEY")
+    revenuecat_project_id: str | None = Field(default=None, alias="REVENUECAT_PROJECT_ID")
     revenuecat_app_id: str | None = Field(default=None, alias="REVENUECAT_APP_ID")
 
     twitter_api_key: str | None = Field(default=None, alias="TWITTER_API_KEY")

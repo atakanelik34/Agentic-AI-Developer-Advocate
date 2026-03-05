@@ -6,7 +6,7 @@ import json
 from functools import lru_cache
 from pathlib import Path
 from datetime import UTC, date, datetime
-from typing import Literal
+from typing import Any, Literal
 from uuid import UUID
 from uuid import uuid4
 
@@ -309,7 +309,7 @@ def get_job(job_id: UUID, store: MemoryStore = Depends(get_store)) -> dict:
 
 
 @app.get("/health")
-def health(store: MemoryStore = Depends(get_store)) -> dict[str, str]:
+def health(store: MemoryStore = Depends(get_store)) -> dict[str, Any]:
     """Health check for DB, Redis, and runtime dependencies."""
 
     db_state = "ok"
@@ -335,13 +335,25 @@ def health(store: MemoryStore = Depends(get_store)) -> dict[str, str]:
     except Exception:  # noqa: BLE001
         outbox_state = "fail"
 
-    return {
+    llm_probe: dict[str, Any] = {}
+    try:
+        runtime = get_runtime()
+        content_agent = runtime["agents"]["content"]  # type: ignore[index]
+        llm_probe = content_agent.router.probe(max_age_seconds=60)  # type: ignore[attr-defined]
+        llm_state = llm_probe.get("status", "fail")
+    except Exception:  # noqa: BLE001
+        llm_state = "fail"
+
+    payload: dict[str, Any] = {
         "status": "ok" if all(v in {"ok", "degraded"} for v in [db_state, redis_state, llm_state, outbox_state]) else "fail",
         "db": db_state,
         "redis": redis_state,
         "llm": llm_state,
         "outbox": outbox_state,
     }
+    if llm_probe:
+        payload["llm_probe"] = llm_probe
+    return payload
 
 
 @app.get("/metrics")

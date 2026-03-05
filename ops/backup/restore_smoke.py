@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-import os
 import subprocess
 from pathlib import Path
+from tempfile import NamedTemporaryFile
 
 import psycopg
 
@@ -29,15 +29,22 @@ def run_restore_smoke() -> dict[str, int]:
 
     restore_dsn = _replace_db_name(base_dsn, test_db)
 
-    subprocess.run(["gunzip", "-c", str(latest_backup)], check=True, stdout=open("/tmp/restore.dump", "wb"))
-    subprocess.run(["pg_restore", "-d", restore_dsn, "/tmp/restore.dump"], check=True)
+    restore_dump_path: Path | None = None
+    try:
+        with NamedTemporaryFile(prefix="rc-restore-", suffix=".dump", delete=False) as temp_dump:
+            restore_dump_path = Path(temp_dump.name)
+            subprocess.run(["gunzip", "-c", str(latest_backup)], check=True, stdout=temp_dump)
+        subprocess.run(["pg_restore", "-d", restore_dsn, str(restore_dump_path)], check=True)
 
-    with psycopg.connect(restore_dsn, autocommit=True) as conn:
-        with conn.cursor() as cur:
-            cur.execute("SELECT COUNT(*) FROM published_content")
-            content_rows = cur.fetchone()[0]
-            cur.execute("SELECT COUNT(*) FROM community_interactions")
-            interaction_rows = cur.fetchone()[0]
+        with psycopg.connect(restore_dsn, autocommit=True) as conn:
+            with conn.cursor() as cur:
+                cur.execute("SELECT COUNT(*) FROM published_content")
+                content_rows = cur.fetchone()[0]
+                cur.execute("SELECT COUNT(*) FROM community_interactions")
+                interaction_rows = cur.fetchone()[0]
+    finally:
+        if restore_dump_path and restore_dump_path.exists():
+            restore_dump_path.unlink(missing_ok=True)
 
     return {"published_content": int(content_rows), "community_interactions": int(interaction_rows)}
 
