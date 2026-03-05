@@ -1,143 +1,105 @@
-# KairosAgent
+# KairosAgent Platform
 
-> 24/7 autonomous **AI Developer + Growth Advocate** runtime built for the RevenueCat ecosystem.
+Production-hardened autonomous agent stack for DevRel + Growth operations, now with dedicated web panel.
 
-[![Status](https://img.shields.io/badge/status-production_hardened-0f766e)](https://github.com/atakanelik34/Agentic-AI-Developer-Advocate)
-[![Runtime](https://img.shields.io/badge/runtime-FastAPI%20%7C%20Celery%20%7C%20Postgres-111827)](https://github.com/atakanelik34/Agentic-AI-Developer-Advocate)
-[![LLM Routing](https://img.shields.io/badge/LLM-Vertex%20%E2%86%92%20OpenAI%20%E2%86%92%20Gemini-1d4ed8)](https://github.com/atakanelik34/Agentic-AI-Developer-Advocate)
+## Stack
 
-KairosAgent is not a demo bot. It is an operations-grade system that can create technical content, run growth experiments, collect product feedback, and publish weekly reports with strict guardrails.
+- Backend: FastAPI, Celery, PostgreSQL (pgvector), Redis
+- LLM Router: Vertex -> OpenAI -> Gemini fallback chain
+- Guardrails: QualityChecker, moderation, outbox-only external writes, runtime kill-switch
+- Frontend Panel: Vite + React (matrix style Kairos chat UI)
 
-## Public Presence
+## Repository Layout
 
-- Agent X account: [@KairosAgentX](https://x.com/KairosAgentX)
-- Operator X account: [@AtakanElik_](https://x.com/AtakanElik_)
-- Application letter: [How Agentic AI Will Reshape App Development and Growth](https://revenuecat.hashnode.dev/how-agentic-ai-will-reshape-app-development-and-growth-and-why-i-m-the-right-agent-for-revenuecat)
+- `api/` FastAPI endpoints (`/chat`, `/health`, webhooks, admin endpoints)
+- `agents/` content/community/feedback/report agent logic
+- `llm/` provider clients + router + probe
+- `quality/` moderation and quality checks
+- `memory/` DB schema and migrations
+- `scheduler/` Celery tasks and schedules
+- `tools/` X/GitHub/Hashnode/RevenueCat integrations
+- `ui/kairos-rain-chat/` Kairos chat panel (React)
+- `AGENT.md` agent contract and identity
+- `SKILL.md` behavioral constraints and operating skill contract
 
-## Why This Repo Matters
+## Local Run (Backend)
 
-In the next 12 months, app teams will ship with humans + agents together. KairosAgent is the concrete implementation of that model:
+```bash
+cp .env.example .env
+# Fill your own credentials in .env
 
-- Ships content continuously (`2+` pieces/week target)
-- Runs measurable growth experiments (`1+` experiment/week target)
-- Maintains community response throughput (`50+` interactions/week target)
-- Produces structured product feedback and weekly async reporting
-
-## Core Architecture
-
-```mermaid
-flowchart TD
-    N8N["n8n Triggers"] --> API["FastAPI"]
-    API --> CELERY["Celery Worker + Beat"]
-    CELERY --> AGENTS["Content / Community / Feedback / Report Agents"]
-    AGENTS --> ROUTER["LLM Router\nVertex -> OpenAI -> Gemini"]
-    AGENTS --> QUALITY["QualityChecker\nModeration + Dedupe + Lint"]
-    AGENTS --> OUTBOX["Outbox Events"]
-    OUTBOX --> PLATFORMS["X / GitHub / Hashnode / RevenueCat"]
-
-    CELERY --> PG["PostgreSQL + pgvector"]
-    CELERY --> REDIS["Redis"]
-    CELERY --> OBS["Prometheus + Grafana + JSON Logs"]
+docker compose up -d postgres redis api celery-worker celery-beat
+docker compose exec api python -m memory.migrations
 ```
 
-## What Makes KairosAgent Different
+Health check:
 
-- **Agent contract layer**: `AGENT.md` + `SKILL.md` are parsed and injected by runtime, not left as static docs.
-- **Outbox-only external writes**: no direct posting from agent logic.
-- **Identity-safe X posting**: write calls are blocked unless authenticated username matches `TWITTER_EXPECTED_USERNAME`.
-- **Independent moderation**: defaults to OpenAI moderation API, separate from LLM routing.
-- **Kill-switch without restart**: `AUTO_MODE` from DB (`system_config`) with env override (`FORCE_AUTO_MODE`).
-- **Experiment rigor**: planned -> running baseline autofill from prior 4 completed weeks.
+```bash
+curl http://localhost:8000/health
+```
 
-## Vertex Model Strategy
+## Local Run (Panel)
 
-- `workload=heavy` -> `VERTEX_HEAVY_MODEL` (default `gemini-2.5-pro`)
-- `workload=standard` -> round-robin across `VERTEX_FLASH_MODELS`
-- Fallback chain: `vertex -> openai -> gemini`
+```bash
+cd ui/kairos-rain-chat
+cp .env.example .env
+npm install
+npm run dev
+```
 
-## Content Pipeline (Strict Order)
+Panel default URL:
 
-1. Idea generation
-2. Draft generation
-3. Insert `published_content(status=draft)`
-4. Generate embedding
-5. Similarity check (last 90 days)
-6. QualityChecker (links + moderation + code checks)
-7. If pass: enqueue outbox `publish_content`
-8. Publisher executes and marks `published`
-9. Promotion runs as separate outbox event
+`http://localhost:8080`
 
-## Public API
+## API Surface
 
+- `POST /chat`
+- `POST /v1/chat/completions`
+- `GET /health`
+- `GET /jobs/{job_id}`
 - `POST /webhook/trigger-content`
 - `POST /webhook/trigger-community`
 - `POST /webhook/trigger-feedback`
 - `POST /webhook/trigger-report`
 - `POST /webhook/trigger-experiment`
 - `POST /webhook/trigger-experiment-planning`
-- `GET /jobs/{job_id}`
-- `GET /health`
-- `POST /admin/auto-mode` (`X-Admin-Token` required)
-- `POST /chat`
-- `POST /v1/chat/completions` (OpenAI-compatible)
-- `GET /chat-ui`
+- `POST /admin/auto-mode` (`X-Admin-Token`)
 
-## Schedules (UTC)
+## Security Rules
 
-- Tue/Thu 10:00 -> content pipeline
-- Hourly -> community monitor
-- Fri 14:00 -> feedback collection
-- Mon 09:00 -> weekly report
-- Mon 11:00 -> experiment planning
-- Mon 13:00 -> experiment execution
-- Daily 02:30 -> DB backup
-- Sun 03:00 -> restore smoke test
-- Every minute -> outbox dispatcher
+- `.env` is never committed.
+- Do not commit tokens, secrets, bearer keys, OAuth secrets.
+- Keep all external writes through outbox only.
+- Use `TWITTER_EXPECTED_USERNAME` identity guard for X posting.
 
-## Quick Start
+Quick scan before push:
 
 ```bash
-git clone https://github.com/atakanelik34/Agentic-AI-Developer-Advocate.git
-cd Agentic-AI-Developer-Advocate
-cp .env.example .env
-# fill ONLY your own credentials
+git ls-files -z | xargs -0 rg -n "(sk-|ghp_|xox|AKIA|BEGIN RSA|Bearer\\s+[A-Za-z0-9._-]{12,})" || true
+```
 
-docker compose up -d
+## VM Deployment (Parity with Local)
 
+Use the same commit on VM to keep local/VM/GitHub aligned:
+
+```bash
+git pull origin main
+cp .env.example .env  # only first setup
+docker compose up -d --build
 docker compose exec api python -m memory.migrations
-pytest -q
 ```
 
-## Security and Secrets Policy
-
-- `.env` is git-ignored and must never be committed.
-- Repo only contains `.env.example` placeholders.
-- Never commit API keys, tokens, OAuth secrets, Bearer tokens, or webhook secrets.
-- Before push, run a quick scan:
+Then start panel on VM if needed:
 
 ```bash
-rg -n "(sk-|ghp_|xox|AKIA|BEGIN RSA|Bearer\s+[A-Za-z0-9_-]{10,})" .
+cd ui/kairos-rain-chat
+npm install
+npm run build
+npm run dev -- --host 0.0.0.0 --port 8080
 ```
 
-## Repo Map
+## Public Presence
 
-- `AGENT.md` -> stable agent identity
-- `SKILL.md` -> task behavior contracts
-- `agents/` -> orchestration logic
-- `quality/` -> moderation + quality gate
-- `llm/` -> router + providers
-- `tools/` -> X/GitHub/Hashnode/RevenueCat integrations
-- `scheduler/` -> Celery jobs + timing
-- `memory/` -> Postgres/pgvector + migrations
-- `api/` -> HTTP surface + chat UI
-- `ops/backup/` -> backup and restore smoke test
-
-## Current Focus
-
-1. Keep weekly experiment results fully metric-backed (no simulation).
-2. Grow public content footprint under KairosAgent identity.
-3. Ship reliable autonomous operation under `AUTO_LOW_RISK` then expand.
-
----
-
-Built for autonomous DevRel operations with production guardrails.
+- Kairos X: [@KairosAgentX](https://x.com/KairosAgentX)
+- Operator X: [@AtakanElik_](https://x.com/AtakanElik_)
+- Application letter: [Hashnode Post](https://revenuecat.hashnode.dev/how-agentic-ai-will-reshape-app-development-and-growth-and-why-i-m-the-right-agent-for-revenuecat)

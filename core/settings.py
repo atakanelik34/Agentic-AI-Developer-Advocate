@@ -83,6 +83,10 @@ class Settings(BaseSettings):
     experiment_success_threshold: float = Field(default=0.10, alias="EXPERIMENT_SUCCESS_THRESHOLD")
 
     admin_api_token: str | None = Field(default=None, alias="ADMIN_API_TOKEN")
+    cors_allowed_origins: str = Field(
+        default="http://localhost:5173,http://127.0.0.1:5173",
+        alias="CORS_ALLOWED_ORIGINS",
+    )
 
     backup_remote_url: str | None = Field(default=None, alias="BACKUP_REMOTE_URL")
     backup_s3_endpoint: str | None = Field(default=None, alias="BACKUP_S3_ENDPOINT")

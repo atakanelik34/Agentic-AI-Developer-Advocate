@@ -12,6 +12,7 @@ from uuid import uuid4
 
 import redis
 from fastapi import Depends, FastAPI, Header, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
@@ -34,6 +35,25 @@ settings = get_settings()
 configure_logging(settings.log_level)
 app = FastAPI(title="RevenueCat Agent API", version="2.2.0")
 CHAT_UI_FILE = Path(__file__).with_name("chat_ui.html")
+
+allowed_origins = [origin.strip() for origin in settings.cors_allowed_origins.split(",") if origin.strip()]
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=allowed_origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+def _enforce_agent_identity(reply_text: str) -> str:
+    """Normalize legacy aliases in interactive chat responses."""
+
+    expected = settings.agent_name.strip() or "KairosAgent"
+    sanitized = reply_text
+    for alias in ("RevenueCatAgent", "RevenueCat Agent"):
+        sanitized = sanitized.replace(alias, expected)
+    return sanitized
 
 
 class TriggerContentRequest(BaseModel):
@@ -148,7 +168,7 @@ def _chat_generate(message: str, history: list[ChatTurn], workload: str) -> Chat
         workload=workload,
     )
     return ChatResponse(
-        reply=response.text.strip(),
+        reply=_enforce_agent_identity(response.text.strip()),
         provider=response.provider,
         model=response.model,
         input_tokens=response.input_tokens,
