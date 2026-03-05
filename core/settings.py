@@ -76,6 +76,7 @@ class Settings(BaseSettings):
     )
 
     quality_min_score: float = Field(default=75.0, alias="QUALITY_MIN_SCORE")
+    quality_similarity_threshold: float = Field(default=0.92, alias="QUALITY_SIMILARITY_THRESHOLD")
     experiment_success_threshold: float = Field(default=0.10, alias="EXPERIMENT_SUCCESS_THRESHOLD")
 
     admin_api_token: str | None = Field(default=None, alias="ADMIN_API_TOKEN")

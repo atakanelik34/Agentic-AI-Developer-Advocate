@@ -12,6 +12,8 @@ from agents.base_agent import BaseAgent
 class CommunityAgent(BaseAgent):
     """Scans community channels and queues contextual replies."""
 
+    TASK_TYPE = "community"
+
     def scan_mentions(self) -> list[dict[str, Any]]:
         """Collect mentions from X and GitHub and filter previously handled records."""
 
@@ -63,7 +65,9 @@ class CommunityAgent(BaseAgent):
         }
 
         response = self.router.generate(
-            system_prompt=self.build_system_prompt(),
+            system_prompt=self.build_system_prompt(
+                task_description=f"community reply generation for {mention['platform']} mention",
+            ),
             user_prompt=json.dumps(payload, ensure_ascii=True),
             workload="standard",
         )

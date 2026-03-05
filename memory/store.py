@@ -12,6 +12,7 @@ import structlog
 from psycopg.rows import dict_row
 
 from core.settings import get_settings
+from memory.embeddings import EmbeddingService
 
 
 logger = structlog.get_logger(__name__)
@@ -23,6 +24,7 @@ class MemoryStore:
     def __init__(self, dsn: str | None = None) -> None:
         settings = get_settings()
         self.dsn = dsn or settings.database_url
+        self._embedding = EmbeddingService()
 
     def _conn(self) -> psycopg.Connection[Any]:
         return psycopg.connect(self.dsn, row_factory=dict_row)
@@ -56,22 +58,70 @@ class MemoryStore:
                 assert row is not None
                 return row["id"]
 
-    def search_memory(self, embedding: list[float], top_k: int = 5) -> list[dict[str, Any]]:
+    def search_memory(
+        self,
+        embedding: list[float],
+        top_k: int = 5,
+        memory_types: list[str] | None = None,
+    ) -> list[dict[str, Any]]:
         """Search memory by vector similarity."""
 
-        query = """
+        if memory_types:
+            query = """
+            SELECT id, memory_type, content, importance, created_at,
+                   1 - (embedding <=> %s::vector) AS similarity
+            FROM agent_memory
+            WHERE memory_type = ANY(%s)
+            ORDER BY embedding <=> %s::vector
+            LIMIT %s
+        """
+            params: tuple[Any, ...] = (
+                _vector_literal(embedding),
+                memory_types,
+                _vector_literal(embedding),
+                top_k,
+            )
+        else:
+            query = """
             SELECT id, memory_type, content, importance, created_at,
                    1 - (embedding <=> %s::vector) AS similarity
             FROM agent_memory
             ORDER BY embedding <=> %s::vector
             LIMIT %s
         """
+            params = (_vector_literal(embedding), _vector_literal(embedding), top_k)
+
         with self._conn() as conn:
             with conn.cursor() as cur:
-                vec = _vector_literal(embedding)
-                cur.execute(query, (vec, vec, top_k))
+                cur.execute(query, params)
                 rows = cur.fetchall()
         return [dict(row) for row in rows]
+
+    def remember(self, content: str, memory_type: str, importance: int = 5) -> UUID:
+        """Embed and persist memory in one call."""
+
+        embedding = self._embedding.embed(content)
+        return self.insert_memory(
+            memory_type=memory_type,
+            content=content,
+            embedding=embedding,
+            importance=importance,
+        )
+
+    def recall(
+        self,
+        query: str,
+        memory_types: list[str] | None = None,
+        top_k: int = 5,
+    ) -> list[dict[str, Any]]:
+        """Semantic recall with optional memory type filter."""
+
+        embedding = self._embedding.embed(query)
+        return self.search_memory(
+            embedding=embedding,
+            top_k=top_k,
+            memory_types=memory_types,
+        )
 
     def get_recent_publications(self, days: int = 30) -> list[dict[str, Any]]:
         """Fetch recently published content."""

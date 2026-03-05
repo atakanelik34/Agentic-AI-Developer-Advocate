@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-from pathlib import Path
 from typing import Any
 
 import structlog
@@ -11,6 +10,8 @@ import structlog
 from core.settings import get_settings
 from llm.router import LLMRouter
 from memory.embeddings import EmbeddingService
+from memory.context_builder import ContextBuilder
+from memory.learner import Learner
 from memory.store import MemoryStore
 
 
@@ -20,39 +21,35 @@ logger = structlog.get_logger(__name__)
 class BaseAgent:
     """Base agent with prompt building, memory operations, and LLM execution."""
 
+    TASK_TYPE = "generic"
+
     def __init__(self, memory_store: MemoryStore, tools: dict[str, Any]) -> None:
         self.settings = get_settings()
         self.memory_store = memory_store
         self.tools = tools
         self.router = LLMRouter(store=memory_store)
         self.embeddings = EmbeddingService()
+        self.context_builder = ContextBuilder(store=memory_store)
+        self.learner = Learner(store=memory_store)
 
-    def build_system_prompt(self) -> str:
-        """Build system prompt with identity, recent publications, and learned facts."""
+    def build_system_prompt(
+        self,
+        task_description: str = "general_task",
+        extra_context: str = "",
+    ) -> str:
+        """Build task-aware system prompt from AGENT/SKILL contracts + memory."""
 
-        template_path = Path("prompts/system_base.txt")
-        template = template_path.read_text(encoding="utf-8")
-
-        recent = self.memory_store.get_recent_publications(days=30)
-        recent_text = "\n".join(f"- {item['title']} ({item.get('url') or 'n/a'})" for item in recent[:15])
-        recent_text = recent_text or "- Yayın yok"
-
-        learned = self.memory_store.get_recent_memories(limit=20)
-        learned_text = "\n".join(f"- {item['content']}" for item in learned)
-        learned_text = learned_text or "- Kayıt yok"
-
-        return template.format(
-            agent_name=self.settings.agent_name,
-            agent_start_date=self.settings.agent_start_date,
-            recent_publications=recent_text,
-            learned_facts=learned_text,
+        return self.context_builder.build(
+            task_type=self.TASK_TYPE,
+            task_description=task_description,
+            extra_context=extra_context,
         )
 
     def run(self, task: str, context: dict[str, Any] | None = None) -> dict[str, Any]:
         """Execute a generic LLM task with optional context."""
 
         context = context or {}
-        system_prompt = self.build_system_prompt()
+        system_prompt = self.build_system_prompt(task_description=task, extra_context=json.dumps(context, ensure_ascii=True))
         user_payload = json.dumps({"task": task, "context": context}, ensure_ascii=True)
         response = self.router.generate(system_prompt=system_prompt, user_prompt=user_payload)
         return {
@@ -84,11 +81,14 @@ class BaseAgent:
     def remember(self, content: str, memory_type: str, importance: int = 5) -> None:
         """Store an item in semantic memory."""
 
-        embedding = self.embeddings.embed(content)
-        self.memory_store.insert_memory(memory_type=memory_type, content=content, embedding=embedding, importance=importance)
+        self.memory_store.remember(content=content, memory_type=memory_type, importance=importance)
 
-    def recall(self, query: str, top_k: int = 5) -> list[dict[str, Any]]:
+    def recall(
+        self,
+        query: str,
+        top_k: int = 5,
+        memory_types: list[str] | None = None,
+    ) -> list[dict[str, Any]]:
         """Fetch top-k semantically similar memory items."""
 
-        embedding = self.embeddings.embed(query)
-        return self.memory_store.search_memory(embedding=embedding, top_k=top_k)
+        return self.memory_store.recall(query=query, top_k=top_k, memory_types=memory_types)

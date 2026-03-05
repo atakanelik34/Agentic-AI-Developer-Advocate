@@ -21,6 +21,8 @@ logger = structlog.get_logger(__name__)
 class ContentAgent(BaseAgent):
     """Owns the content pipeline from ideation to queued publication."""
 
+    TASK_TYPE = "content"
+
     def __init__(self, memory_store, tools: dict[str, Any]) -> None:  # type: ignore[no-untyped-def]
         super().__init__(memory_store=memory_store, tools=tools)
         self.quality_checker = QualityChecker()
@@ -40,7 +42,9 @@ class ContentAgent(BaseAgent):
         }
 
         response = self.router.generate(
-            system_prompt=self.build_system_prompt(),
+            system_prompt=self.build_system_prompt(
+                task_description="content idea generation from changelog and community mentions",
+            ),
             user_prompt=json.dumps(prompt, ensure_ascii=True),
             response_format={"type": "json_object"},
             workload="standard",
@@ -66,7 +70,9 @@ class ContentAgent(BaseAgent):
         }
 
         response = self.router.generate(
-            system_prompt=self.build_system_prompt(),
+            system_prompt=self.build_system_prompt(
+                task_description=f"write {idea.get('type', 'blog')} content about {idea.get('title', '')}",
+            ),
             user_prompt=json.dumps(payload, ensure_ascii=True),
             response_format={"type": "json_object"},
             workload="heavy",

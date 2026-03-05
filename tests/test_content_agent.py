@@ -38,6 +38,12 @@ class FakeStore:
     def get_recent_memories(self, limit: int = 20):
         return []
 
+    def recall(self, query: str, memory_types=None, top_k: int = 5):  # noqa: ANN001,ANN201
+        return []
+
+    def remember(self, content: str, memory_type: str, importance: int = 5):  # noqa: ANN001,ANN201
+        return None
+
     def create_content_draft(self, **kwargs):
         draft = {"id": uuid4(), **kwargs}
         self.drafts.append(draft)

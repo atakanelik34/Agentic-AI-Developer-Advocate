@@ -6,6 +6,7 @@ Production-hardened, vendor-agnostic autonomous agent runtime for RevenueCat adv
 
 - Vendor-agnostic LLM router (`Vertex -> OpenAI -> Gemini` default fallback)
 - Vertex model rotation: `heavy` workloads use `VERTEX_HEAVY_MODEL`, daily flows rotate across `VERTEX_FLASH_MODELS`
+- AGENT/SKILL contract layer (`AGENT.md` + `SKILL.md`) with memory-aware context assembly
 - Independent moderation pipeline (`MODERATION_PROVIDER=openai` default)
 - Outbox-only external writes (no direct posting from agents)
 - Quality gate with code checks, source link checks, and duplicate control
@@ -16,8 +17,10 @@ Production-hardened, vendor-agnostic autonomous agent runtime for RevenueCat adv
 ## Project Layout
 
 - `agents/`: content/community/feedback/report agents
+- `AGENT.md`: stable identity contract
+- `SKILL.md`: task-specific execution rules
 - `api/`: FastAPI webhook and observability endpoints
-- `memory/`: pgvector persistence + migrations
+- `memory/`: pgvector persistence + migrations + `context_builder` + `learner`
 - `llm/`: provider adapters and router
 - `quality/`: moderation + quality checker
 - `tools/`: platform API clients

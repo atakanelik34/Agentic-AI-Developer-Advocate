@@ -14,6 +14,8 @@ from agents.base_agent import BaseAgent
 class FeedbackAgent(BaseAgent):
     """Aggregates community signals into structured product feedback."""
 
+    TASK_TYPE = "feedback"
+
     def collect_signals(self) -> list[dict[str, Any]]:
         """Collect raw feedback signals from interactions and public channels."""
 
@@ -59,7 +61,9 @@ class FeedbackAgent(BaseAgent):
             "max_items": 5,
         }
         response = self.router.generate(
-            system_prompt=self.build_system_prompt(),
+            system_prompt=self.build_system_prompt(
+                task_description="cluster community signals into structured product feedback",
+            ),
             user_prompt=json.dumps(payload, ensure_ascii=True),
             response_format={"type": "json_object"},
             workload="heavy",

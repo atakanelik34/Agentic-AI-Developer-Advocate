@@ -66,7 +66,7 @@ class QualityChecker:
 
         similarity = float(content.metadata.get("similarity_score", 0.0))
         checks["similarity_score"] = similarity
-        if similarity >= 0.92:
+        if similarity >= float(self.settings.quality_similarity_threshold):
             flags.append(
                 QualityFlag(
                     "duplicate_similarity",

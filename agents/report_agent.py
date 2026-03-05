@@ -15,6 +15,8 @@ from agents.base_agent import BaseAgent
 class ReportAgent(BaseAgent):
     """Generates weekly KPI reports and stores snapshots."""
 
+    TASK_TYPE = "report"
+
     def generate_weekly_report(self, week_start: date | None = None) -> dict[str, Any]:
         """Build weekly report markdown and persist metrics."""
 
@@ -30,7 +32,9 @@ class ReportAgent(BaseAgent):
             "targets": {"content": 2, "interaction": 50, "feedback": 3},
         }
         response = self.router.generate(
-            system_prompt=self.build_system_prompt(),
+            system_prompt=self.build_system_prompt(
+                task_description=f"weekly report generation for week_start={week_start}",
+            ),
             user_prompt=json.dumps(payload, ensure_ascii=True),
             workload="heavy",
         )
