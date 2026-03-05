@@ -70,7 +70,7 @@ class Settings(BaseSettings):
 
     slack_webhook_url: str | None = Field(default=None, alias="SLACK_WEBHOOK_URL")
 
-    agent_name: str = Field(default="RevenueCatAgent", alias="AGENT_NAME")
+    agent_name: str = Field(default="KairosAgent", alias="AGENT_NAME")
     agent_start_date: str = Field(default="2026-03-05", alias="AGENT_START_DATE")
 
     force_auto_mode: Literal["DRY_RUN", "AUTO_LOW_RISK", "AUTO_ALL", ""] | None = Field(
