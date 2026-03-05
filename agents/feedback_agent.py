@@ -9,12 +9,23 @@ from typing import Any
 import httpx
 
 from agents.base_agent import BaseAgent
+from skills.contract import SkillValidator, build_signal_evidence_pool, load_skill_validator
 
 
 class FeedbackAgent(BaseAgent):
     """Aggregates community signals into structured product feedback."""
 
     TASK_TYPE = "feedback"
+
+    def __init__(
+        self,
+        memory_store,
+        tools: dict[str, Any],
+        *,
+        skill_validator: SkillValidator | None = None,
+    ) -> None:  # type: ignore[no-untyped-def]
+        super().__init__(memory_store=memory_store, tools=tools)
+        self.skill_validator = skill_validator or load_skill_validator()
 
     def collect_signals(self) -> list[dict[str, Any]]:
         """Collect raw feedback signals from interactions and public channels."""
@@ -70,10 +81,11 @@ class FeedbackAgent(BaseAgent):
         )
 
         parsed = _parse_possible_list(response.text)
+        evidence_pool = build_signal_evidence_pool(signals)
         if parsed:
-            return parsed[:5]
+            return self.skill_validator.normalize_feedback_items(parsed, evidence_pool=evidence_pool)
 
-        return [
+        fallback_items = [
             {
                 "title": "Docs clarity around agent workflows",
                 "description": "Users ask for clearer examples for agentic app monetization setup.",
@@ -82,6 +94,7 @@ class FeedbackAgent(BaseAgent):
                 "evidence": [],
             }
         ]
+        return self.skill_validator.normalize_feedback_items(fallback_items, evidence_pool=evidence_pool)
 
     def submit_feedback(self, feedback_items: list[dict[str, Any]]) -> list[str]:
         """Persist feedback and notify Slack webhook."""

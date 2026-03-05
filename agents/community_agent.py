@@ -7,12 +7,23 @@ from pathlib import Path
 from typing import Any
 
 from agents.base_agent import BaseAgent
+from skills.contract import SkillValidator, load_skill_validator
 
 
 class CommunityAgent(BaseAgent):
     """Scans community channels and queues contextual replies."""
 
     TASK_TYPE = "community"
+
+    def __init__(
+        self,
+        memory_store,
+        tools: dict[str, Any],
+        *,
+        skill_validator: SkillValidator | None = None,
+    ) -> None:  # type: ignore[no-untyped-def]
+        super().__init__(memory_store=memory_store, tools=tools)
+        self.skill_validator = skill_validator or load_skill_validator()
 
     def scan_mentions(self) -> list[dict[str, Any]]:
         """Collect mentions from X and GitHub and filter previously handled records."""
@@ -71,11 +82,10 @@ class CommunityAgent(BaseAgent):
             user_prompt=json.dumps(payload, ensure_ascii=True),
             workload="standard",
         )
-        text = response.text.strip()
-
-        if mention["platform"] == "twitter":
-            return text[:280]
-        return text[:500]
+        return self.skill_validator.sanitize_community_reply(
+            platform=mention["platform"],
+            text=response.text,
+        )
 
     def run_community_cycle(self) -> dict[str, int]:
         """Queue community reply outbox events respecting per-user daily caps."""
