@@ -1,0 +1,30 @@
+{
+  "name": "RevenueCat Content Pipeline",
+  "active": false,
+  "nodes": [
+    {
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "position": [300, 300],
+      "parameters": {
+        "rule": {
+          "interval": [{"field": "cronExpression", "expression": "0 10 * * 2,4"}]
+        }
+      }
+    },
+    {
+      "name": "Trigger API",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [560, 300],
+      "parameters": {
+        "method": "POST",
+        "url": "http://api:8000/webhook/trigger-content"
+      }
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [[{"node": "Trigger API", "type": "main", "index": 0}]]
+    }
+  }
+}

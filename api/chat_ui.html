@@ -1,0 +1,336 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RevenueCat Agent Chat</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-0: #071521;
+      --bg-1: #0f2436;
+      --bg-2: #133a4b;
+      --panel: rgba(9, 21, 34, 0.76);
+      --panel-border: rgba(133, 196, 255, 0.26);
+      --text: #eaf4ff;
+      --muted: #93a9c0;
+      --accent: #1fd3a9;
+      --accent-2: #ffac4a;
+      --user: #102f45;
+      --assistant: #172335;
+      --error: #ff6f7f;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      font-family: "Space Grotesk", sans-serif;
+      background:
+        radial-gradient(1200px 600px at 8% -10%, rgba(31, 211, 169, 0.18), transparent 62%),
+        radial-gradient(1000px 500px at 98% 0%, rgba(255, 172, 74, 0.18), transparent 57%),
+        linear-gradient(160deg, var(--bg-0), var(--bg-1) 45%, var(--bg-2));
+      display: grid;
+      place-items: center;
+      padding: 20px;
+    }
+
+    .shell {
+      width: min(980px, 100%);
+      height: min(86vh, 860px);
+      border: 1px solid var(--panel-border);
+      border-radius: 18px;
+      background: var(--panel);
+      backdrop-filter: blur(8px);
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      overflow: hidden;
+      box-shadow:
+        0 24px 64px rgba(0, 0, 0, 0.42),
+        inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    }
+
+    .topbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 16px 18px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.01));
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+    }
+
+    .dot {
+      width: 11px;
+      height: 11px;
+      border-radius: 999px;
+      background: linear-gradient(145deg, var(--accent), #00b6ff);
+      box-shadow: 0 0 16px rgba(31, 211, 169, 0.7);
+      animation: pulse 2.4s infinite ease;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.25); opacity: 0.75; }
+    }
+
+    .controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    select, button {
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: var(--text);
+      background: rgba(7, 16, 27, 0.78);
+      padding: 8px 12px;
+      font: 500 13px "IBM Plex Mono", monospace;
+    }
+
+    button {
+      cursor: pointer;
+      transition: transform 120ms ease, border-color 120ms ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      border-color: rgba(255, 255, 255, 0.35);
+    }
+
+    #log {
+      overflow-y: auto;
+      padding: 20px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .msg {
+      max-width: 86%;
+      padding: 12px 14px;
+      border-radius: 13px;
+      line-height: 1.45;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      animation: riseIn 160ms ease;
+    }
+
+    @keyframes riseIn {
+      from { opacity: 0; transform: translateY(5px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .user {
+      align-self: flex-end;
+      background: linear-gradient(150deg, rgba(38, 102, 142, 0.95), rgba(16, 47, 69, 0.96));
+    }
+
+    .assistant {
+      align-self: flex-start;
+      background: linear-gradient(150deg, rgba(28, 41, 60, 0.96), rgba(20, 31, 47, 0.98));
+    }
+
+    .error {
+      align-self: center;
+      background: rgba(82, 18, 29, 0.82);
+      border-color: rgba(255, 111, 127, 0.35);
+      color: #ffdbe1;
+    }
+
+    .meta {
+      margin-top: 7px;
+      color: var(--muted);
+      font: 12px "IBM Plex Mono", monospace;
+    }
+
+    .composer {
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 14px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+    }
+
+    textarea {
+      resize: none;
+      min-height: 58px;
+      max-height: 168px;
+      border-radius: 12px;
+      padding: 12px 13px;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      outline: none;
+      color: var(--text);
+      background: rgba(10, 20, 31, 0.82);
+      font: 15px "Space Grotesk", sans-serif;
+      line-height: 1.35;
+    }
+
+    textarea:focus {
+      border-color: rgba(31, 211, 169, 0.65);
+      box-shadow: 0 0 0 3px rgba(31, 211, 169, 0.12);
+    }
+
+    #send {
+      min-width: 110px;
+      font: 600 14px "Space Grotesk", sans-serif;
+      background: linear-gradient(130deg, var(--accent), #00b6ff);
+      color: #031018;
+      border: none;
+      border-radius: 12px;
+    }
+
+    #send:disabled {
+      cursor: not-allowed;
+      opacity: 0.62;
+    }
+
+    .hint {
+      margin-top: 6px;
+      color: var(--muted);
+      font: 12px "IBM Plex Mono", monospace;
+    }
+
+    @media (max-width: 760px) {
+      body { padding: 8px; }
+      .shell { height: 94vh; border-radius: 14px; }
+      .msg { max-width: 100%; }
+      .composer { grid-template-columns: 1fr; }
+      #send { width: 100%; min-height: 44px; }
+    }
+  </style>
+</head>
+<body>
+  <section class="shell">
+    <header class="topbar">
+      <div class="brand">
+        <span class="dot" aria-hidden="true"></span>
+        <span>RevenueCat Agent Console</span>
+      </div>
+      <div class="controls">
+        <label for="workload" style="font: 12px 'IBM Plex Mono', monospace; color: var(--muted);">Mode</label>
+        <select id="workload">
+          <option value="standard">standard (flash rotation)</option>
+          <option value="heavy">heavy (pro model)</option>
+        </select>
+        <button id="clear" type="button">Clear</button>
+      </div>
+    </header>
+
+    <main id="log" aria-live="polite"></main>
+
+    <form id="form" class="composer">
+      <div>
+        <textarea id="input" placeholder="Ask about content, growth experiments, deployment, metrics..."></textarea>
+        <div class="hint">Enter to send, Shift+Enter for newline</div>
+      </div>
+      <button id="send" type="submit">Send</button>
+    </form>
+  </section>
+
+  <script>
+    const form = document.getElementById("form");
+    const input = document.getElementById("input");
+    const log = document.getElementById("log");
+    const sendBtn = document.getElementById("send");
+    const clearBtn = document.getElementById("clear");
+    const workload = document.getElementById("workload");
+    const history = [];
+
+    function appendMessage(role, content, meta) {
+      const wrap = document.createElement("article");
+      wrap.className = "msg " + role;
+      wrap.textContent = content;
+
+      if (meta) {
+        const metaEl = document.createElement("div");
+        metaEl.className = "meta";
+        metaEl.textContent = meta;
+        wrap.appendChild(metaEl);
+      }
+
+      log.appendChild(wrap);
+      log.scrollTop = log.scrollHeight;
+    }
+
+    function setLoading(on) {
+      sendBtn.disabled = on;
+      sendBtn.textContent = on ? "Sending..." : "Send";
+    }
+
+    async function sendMessage(message) {
+      setLoading(true);
+      appendMessage("user", message, null);
+      history.push({ role: "user", content: message });
+
+      try {
+        const res = await fetch("/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            message,
+            history,
+            workload: workload.value
+          })
+        });
+
+        if (!res.ok) {
+          const text = await res.text();
+          throw new Error(text || "Request failed");
+        }
+
+        const data = await res.json();
+        history.push({ role: "assistant", content: data.reply });
+        appendMessage("assistant", data.reply, data.provider + " | " + data.model + " | in:" + data.input_tokens + " out:" + data.output_tokens);
+      } catch (err) {
+        appendMessage("error", "Chat request failed", String(err));
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const message = input.value.trim();
+      if (!message) return;
+      input.value = "";
+      await sendMessage(message);
+      input.focus();
+    });
+
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        form.requestSubmit();
+      }
+    });
+
+    clearBtn.addEventListener("click", () => {
+      history.length = 0;
+      log.innerHTML = "";
+      appendMessage("assistant", "Conversation cleared. Ready.", "local state reset");
+    });
+
+    appendMessage(
+      "assistant",
+      "Ready. I can run content, community, feedback, experiment, and ops workflows. Ask directly.",
+      "UI mode: browser chat"
+    );
+  </script>
+</body>
+</html>

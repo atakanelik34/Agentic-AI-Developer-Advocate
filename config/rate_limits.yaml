@@ -1,0 +1,18 @@
+platforms:
+  twitter:
+    writes_per_month: 1500
+    reads_per_month: 10000
+    replies_per_user_per_day: 3
+    retry_window_seconds: 900
+    base_delay_seconds: 5
+    max_delay_seconds: 600
+  github:
+    requests_per_hour: 5000
+    retry_window_seconds: 3600
+    base_delay_seconds: 5
+    max_delay_seconds: 1800
+  hashnode:
+    posts_per_day: 10
+    retry_window_seconds: 300
+    base_delay_seconds: 5
+    max_delay_seconds: 900

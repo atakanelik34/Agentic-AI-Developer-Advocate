@@ -1,0 +1,4 @@
+"""Shared constants."""
+
+AUTO_MODE_KEY = "AUTO_MODE"
+VALID_AUTO_MODES = {"DRY_RUN", "AUTO_LOW_RISK", "AUTO_ALL"}

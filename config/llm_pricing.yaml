@@ -1,0 +1,23 @@
+providers:
+  vertex:
+    gemini-2.5-pro:
+      input_per_million_usd: 1.25
+      output_per_million_usd: 5.0
+    gemini-2.5-flash:
+      input_per_million_usd: 0.0
+      output_per_million_usd: 0.0
+    gemini-2.5-flash-lite:
+      input_per_million_usd: 0.0
+      output_per_million_usd: 0.0
+  openai:
+    gpt-4.1-mini:
+      input_per_million_usd: 0.4
+      output_per_million_usd: 1.6
+  gemini:
+    gemini-2.5-pro:
+      input_per_million_usd: 1.25
+      output_per_million_usd: 5.0
+  ollama:
+    llama3.1:8b:
+      input_per_million_usd: 0.0
+      output_per_million_usd: 0.0

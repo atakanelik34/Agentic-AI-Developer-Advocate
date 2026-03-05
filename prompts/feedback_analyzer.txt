@@ -1,0 +1,12 @@
+Aşağıdaki sinyalleri ürün geri bildirimi için kümele.
+
+3-5 maddelik JSON liste döndür:
+[
+  {
+    "title": "...",
+    "description": "...",
+    "category": "bug|feature_request|ux|docs",
+    "priority": "critical|high|medium|low",
+    "evidence": ["url_or_id"]
+  }
+]

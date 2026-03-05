@@ -1,0 +1,24 @@
+Aşağıdaki verilerden haftalık rapor oluştur.
+
+Format:
+# Weekly Report — [Tarih]
+
+## 📊 Metrikler
+- İçerik: X yayın (hedef: 2+) ✅/❌
+- Etkileşim: X interaction (hedef: 50+) ✅/❌
+- Feedback: X item (hedef: 3+) ✅/❌
+
+## 📝 Bu Hafta Yayınlananlar
+[LİSTE]
+
+## 🧪 Growth Experiment
+[Deney adı, hypothesis, sonuç]
+
+## 💡 Product Feedback Özeti
+[3 item]
+
+## 🔍 Gözlemler & Öğrenilenler
+[metin]
+
+## 📅 Gelecek Hafta Planı
+[3 madde]

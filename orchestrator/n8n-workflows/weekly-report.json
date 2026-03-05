@@ -1,0 +1,30 @@
+{
+  "name": "RevenueCat Weekly Report",
+  "active": false,
+  "nodes": [
+    {
+      "name": "Monday Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "position": [300, 300],
+      "parameters": {
+        "rule": {
+          "interval": [{"field": "cronExpression", "expression": "0 9 * * 1"}]
+        }
+      }
+    },
+    {
+      "name": "Call Report Webhook",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [560, 300],
+      "parameters": {
+        "method": "POST",
+        "url": "http://api:8000/webhook/trigger-report"
+      }
+    }
+  ],
+  "connections": {
+    "Monday Trigger": {
+      "main": [[{"node": "Call Report Webhook", "type": "main", "index": 0}]]
+    }
+  }
+}
