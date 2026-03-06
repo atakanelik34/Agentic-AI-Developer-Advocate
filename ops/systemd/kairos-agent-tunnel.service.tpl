@@ -1,12 +1,11 @@
 [Unit]
 Description=KairosAgent Public Tunnel (cloudflared Quick Tunnel)
-After=network-online.target kairos-agent-ui.service
+After=network-online.target
 Wants=network-online.target
-Requires=kairos-agent-ui.service
 
 [Service]
 Type=simple
-ExecStart=/usr/local/bin/cloudflared tunnel --no-autoupdate --url http://127.0.0.1:8080
+ExecStart=/usr/local/bin/cloudflared tunnel --no-autoupdate --url http://127.0.0.1:8081
 Restart=always
 RestartSec=5
 StandardOutput=append:/var/log/kairos-cloudflared.log
